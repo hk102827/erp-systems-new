@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
-use App\Models\ProductDiscount;
 use App\Models\ProductImage;
 use App\Models\ProductVariant;
 use App\Models\Inventory;
@@ -15,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use
 
 
 class ProductController extends Controller

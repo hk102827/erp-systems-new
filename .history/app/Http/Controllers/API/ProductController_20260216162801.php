@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
-use App\Models\ProductDiscount;
 use App\Models\ProductImage;
 use App\Models\ProductVariant;
 use App\Models\Inventory;
@@ -12,9 +11,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 
 
 class ProductController extends Controller
@@ -882,144 +878,139 @@ public function index(Request $request)
 
 
 
-public function generateDiscountTemplate(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'category_id' => 'nullable|exists:categories,id',
-        'start_date' => 'required|date',
-        'end_date' => 'required|date|after:start_date',
-    ]);
+    public function generateDiscountTemplate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'category_id' => 'nullable|exists:categories,id',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
+        ]);
 
-    if ($validator->fails()) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Validation error',
-            'errors' => $validator->errors()
-        ], 422);
-    }
-
-    try {
-        // Get products
-        $query = Product::with(['category', 'variants'])
-            ->where('is_active', true);
-
-        if ($request->has('category_id')) {
-            $query->where('category_id', $request->category_id);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
         }
 
-        $products = $query->get();
+        try {
+            // Get products
+            $query = Product::with(['category', 'variants'])
+                ->where('is_active', true);
 
-        // Create spreadsheet
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
+            if ($request->has('category_id')) {
+                $query->where('category_id', $request->category_id);
+            }
 
-        // Set headers
-        $sheet->setCellValue('A1', 'Product ID');
-        $sheet->setCellValue('B1', 'Product Name');
-        $sheet->setCellValue('C1', 'SKU');
-        $sheet->setCellValue('D1', 'Variant ID');
-        $sheet->setCellValue('E1', 'Variant Name');
-        $sheet->setCellValue('F1', 'Current Price (KWD)');
-        $sheet->setCellValue('G1', 'Discount Type');
-        $sheet->setCellValue('H1', 'Discount Value');
-        $sheet->setCellValue('I1', 'Start Date');
-        $sheet->setCellValue('J1', 'End Date');
+            $products = $query->get();
 
-        // Style header row
-        $sheet->getStyle('A1:J1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:J1')->getFill()
-            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-            ->getStartColor()->setARGB('FFD3D3D3');
+            // Create spreadsheet
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
 
-        // Add data
-        $row = 2;
-        foreach ($products as $product) {
-            if (!$product->has_variants) {
-                // Product without variants
-                $sheet->setCellValue('A' . $row, $product->id);
-                $sheet->setCellValue('B' . $row, $product->product_name);
-                $sheet->setCellValue('C' . $row, $product->sku);
-                $sheet->setCellValue('D' . $row, '');
-                $sheet->setCellValue('E' . $row, '');
-                $sheet->setCellValue('F' . $row, $product->selling_price);
-                $sheet->setCellValue('G' . $row, 'Percentage'); // Default
-                $sheet->setCellValue('H' . $row, ''); // User fills this
-                $sheet->setCellValue('I' . $row, $request->start_date);
-                $sheet->setCellValue('J' . $row, $request->end_date);
-                $row++;
-            } else {
-                // Product with variants
-                foreach ($product->variants as $variant) {
+            // Set headers
+            $sheet->setCellValue('A1', 'Product ID');
+            $sheet->setCellValue('B1', 'Product Name');
+            $sheet->setCellValue('C1', 'SKU');
+            $sheet->setCellValue('D1', 'Variant ID');
+            $sheet->setCellValue('E1', 'Variant Name');
+            $sheet->setCellValue('F1', 'Current Price (KWD)');
+            $sheet->setCellValue('G1', 'Discount Type');
+            $sheet->setCellValue('H1', 'Discount Value');
+            $sheet->setCellValue('I1', 'Start Date');
+            $sheet->setCellValue('J1', 'End Date');
+
+            // Style header row
+            $sheet->getStyle('A1:J1')->getFont()->setBold(true);
+            $sheet->getStyle('A1:J1')->getFill()
+                ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                ->getStartColor()->setARGB('FFD3D3D3');
+
+            // Add data
+            $row = 2;
+            foreach ($products as $product) {
+                if (!$product->has_variants) {
+                    // Product without variants
                     $sheet->setCellValue('A' . $row, $product->id);
                     $sheet->setCellValue('B' . $row, $product->product_name);
                     $sheet->setCellValue('C' . $row, $product->sku);
-                    $sheet->setCellValue('D' . $row, $variant->id);
-                    $sheet->setCellValue('E' . $row, $variant->variant_name . ': ' . $variant->variant_value);
-                    $sheet->setCellValue('F' . $row, $variant->selling_price);
-                    $sheet->setCellValue('G' . $row, 'Percentage');
-                    $sheet->setCellValue('H' . $row, '');
+                    $sheet->setCellValue('D' . $row, '');
+                    $sheet->setCellValue('E' . $row, '');
+                    $sheet->setCellValue('F' . $row, $product->selling_price);
+                    $sheet->setCellValue('G' . $row, 'Percentage'); // Default
+                    $sheet->setCellValue('H' . $row, ''); // User fills this
                     $sheet->setCellValue('I' . $row, $request->start_date);
                     $sheet->setCellValue('J' . $row, $request->end_date);
                     $row++;
+                } else {
+                    // Product with variants
+                    foreach ($product->variants as $variant) {
+                        $sheet->setCellValue('A' . $row, $product->id);
+                        $sheet->setCellValue('B' . $row, $product->product_name);
+                        $sheet->setCellValue('C' . $row, $product->sku);
+                        $sheet->setCellValue('D' . $row, $variant->id);
+                        $sheet->setCellValue('E' . $row, $variant->variant_name . ': ' . $variant->variant_value);
+                        $sheet->setCellValue('F' . $row, $variant->selling_price);
+                        $sheet->setCellValue('G' . $row, 'Percentage');
+                        $sheet->setCellValue('H' . $row, '');
+                        $sheet->setCellValue('I' . $row, $request->start_date);
+                        $sheet->setCellValue('J' . $row, $request->end_date);
+                        $row++;
+                    }
                 }
             }
+
+            // Auto-size columns
+            foreach (range('A', 'J') as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+
+            // Add data validation for Discount Type
+            $validation = $sheet->getCell('G2')->getDataValidation();
+            $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+            $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_INFORMATION);
+            $validation->setAllowBlank(false);
+            $validation->setShowInputMessage(true);
+            $validation->setShowErrorMessage(true);
+            $validation->setShowDropDown(true);
+            $validation->setErrorTitle('Input error');
+            $validation->setError('Value must be Percentage or Fixed Amount');
+            $validation->setPromptTitle('Select type');
+            $validation->setPrompt('Please select discount type');
+            $validation->setFormula1('"Percentage,Fixed Amount"');
+
+            // Apply validation to all rows
+            for ($i = 2; $i < $row; $i++) {
+                $sheet->getCell('G' . $i)->setDataValidation(clone $validation);
+            }
+
+            // Save file
+            $fileName = 'bulk_discount_template_' . date('Ymd_His') . '.xlsx';
+            $filePath = 'exports/' . $fileName;
+            
+            $writer = new Xlsx($spreadsheet);
+            $writer->save(storage_path('app/public/' . $filePath));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Excel template generated successfully',
+                'data' => [
+                    'file_name' => $fileName,
+                    'file_path' => $filePath,
+                    'download_url' => url('storage/' . $filePath),
+                    'total_items' => $row - 2,
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate template',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // Auto-size columns
-        foreach (range('A', 'J') as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
-        }
-
-        // Add data validation for Discount Type
-        $validation = $sheet->getCell('G2')->getDataValidation();
-        $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-        $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_INFORMATION);
-        $validation->setAllowBlank(false);
-        $validation->setShowInputMessage(true);
-        $validation->setShowErrorMessage(true);
-        $validation->setShowDropDown(true);
-        $validation->setErrorTitle('Input error');
-        $validation->setError('Value must be Percentage or Fixed Amount');
-        $validation->setPromptTitle('Select type');
-        $validation->setPrompt('Please select discount type');
-        $validation->setFormula1('"Percentage,Fixed Amount"');
-
-        // Apply validation to all rows
-        for ($i = 2; $i < $row; $i++) {
-            $sheet->getCell('G' . $i)->setDataValidation(clone $validation);
-        }
-
-        // Save file
-        $fileName = 'bulk_discount_template_' . date('Ymd_His') . '.xlsx';
-        
-        // Create exports directory if not exists
-        Storage::disk('public')->makeDirectory('exports');
-        
-        $filePath = 'exports/' . $fileName;
-        $fullPath = storage_path('app/public/' . $filePath);
-        
-        $writer = new Xlsx($spreadsheet);
-        $writer->save($fullPath);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Excel template generated successfully',
-            'data' => [
-                'file_name' => $fileName,
-                'file_path' => $filePath,
-                'download_url' => url('storage/' . $filePath),
-                'total_items' => $row - 2,
-            ]
-        ], 200);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to generate template',
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
 
     /**
      * Import bulk discount from Excel

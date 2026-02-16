@@ -14,7 +14,6 @@ use App\Http\Controllers\API\StockTransferController;
 use App\Http\Controllers\API\DamagedItemController;
 
 
-
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -187,13 +186,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/damaged-items', [DamagedItemController::class, 'store']);
         Route::post('/damaged-items/{id}/decision', [DamagedItemController::class, 'makeDecision']);
     });
-    // Bulk Discount Management
-    Route::middleware(['permission:edit_product'])->group(function () {
-        Route::post('/products/discounts/generate-template', [ProductController::class, 'generateDiscountTemplate']);
-        Route::post('/products/discounts/import', [ProductController::class, 'importBulkDiscount']);
-        Route::get('/discounts/products', [ProductController::class, 'getActiveDiscounts']);
-        Route::delete('/discounts/products/{id}', [ProductController::class, 'deleteDiscount']);
-    });
+    
 
     // Example of using permission middleware
     // Route::middleware(['permission:create_product'])->group(function () {
