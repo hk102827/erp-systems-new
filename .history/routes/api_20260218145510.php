@@ -19,7 +19,6 @@ use App\Http\Controllers\API\LeaveTypeController;
 use App\Http\Controllers\API\LeaveRequestController;
 use App\Http\Controllers\API\BonusController;
 use App\Http\Controllers\API\PayrollController;
-use App\Http\Controllers\API\DashboardController;
 
 
 
@@ -268,7 +267,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/payrolls/{id}/mark-paid', [PayrollController::class, 'markAsPaid']);
     Route::delete('/payrolls/{id}', [PayrollController::class, 'destroy']);
     // Dashboard
-    Route::get('/dashboard/hr', [DashboardController::class, 'hrDashboard']);
+Route::get('/dashboard/hr', [DashboardController::class, 'hrDashboard']);
 
     // Example of using permission middleware
     // Route::middleware(['permission:create_product'])->group(function () {

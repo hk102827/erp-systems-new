@@ -370,99 +370,79 @@ public function index(Request $request)
     /**
      * Update product
      */
- public function update(Request $request, $id)
-{
-    // Fix for PUT/PATCH with form-data
-    if ($request->isMethod('PUT') || $request->isMethod('PATCH')) {
-        $request->merge($request->all());
-    }
-
-    $validator = Validator::make($request->all(), [
-        'product_name' => 'required|string|max:255',
-        'sku' => 'nullable|string|unique:products,sku,' . $id,
-        'barcode' => 'nullable|string|unique:products,barcode,' . $id,
-        'category_id' => 'nullable|exists:categories,id',
-        'description' => 'nullable|string',
-        'unit' => 'required|string',
-        'weight' => 'nullable|numeric',
-        'dimensions' => 'nullable|string',
-        'color' => 'nullable|string',
-        'cost_price' => 'required|numeric|min:0',
-        'selling_price' => 'required|numeric|min:0',
-        'has_variants' => 'boolean',
-        'low_stock_alert' => 'nullable|integer|min:0',
-        'is_active' => 'boolean',
-        'images' => 'nullable|array',
-        'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Validation error',
-            'errors' => $validator->errors()
-        ], 422);
-    }
-
-    DB::beginTransaction();
-
-    try {
-        $product = Product::findOrFail($id);
-
-        $product->update([
-            'product_name' => $request->product_name,
-            'sku' => $request->sku ?? $product->sku,
-            'barcode' => $request->barcode ?? $product->barcode,
-            'category_id' => $request->category_id ?? $product->category_id,
-            'description' => $request->description,
-            'unit' => $request->unit,
-            'weight' => $request->weight,
-            'dimensions' => $request->dimensions,
-            'color' => $request->color,
-            'cost_price' => $request->cost_price,
-            'selling_price' => $request->selling_price,
-            'has_variants' => $request->has_variants ?? $product->has_variants,
-            'low_stock_alert' => $request->low_stock_alert ?? $product->low_stock_alert,
-            'is_active' => $request->is_active ?? $product->is_active,
+    public function update(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'product_name' => 'required|string|max:255',
+            'sku' => 'nullable|string|unique:products,sku,' . $id,
+            'barcode' => 'nullable|string|unique:products,barcode,' . $id,
+            'category_id' => 'nullable|exists:categories,id',
+            'description' => 'nullable|string',
+            'unit' => 'required|string',
+            'weight' => 'nullable|numeric',
+            'dimensions' => 'nullable|string',
+            'color' => 'nullable|string',
+            'cost_price' => 'required|numeric|min:0',
+            'selling_price' => 'required|numeric|min:0',
+            'has_variants' => 'boolean',
+            'low_stock_alert' => 'nullable|integer|min:0',
+            'is_active' => 'boolean',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // Handle new image uploads
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $index => $image) {
-                $imageName = time() . '_' . $index . '_' . $image->getClientOriginalName();
-                $imagePath = $image->storeAs('products', $imageName, 'public');
-
-                $existingImagesCount = $product->images()->count();
-
-                ProductImage::create([
-                    'product_id' => $product->id,
-                    'image_path' => $imagePath,
-                    'is_primary' => $existingImagesCount === 0 && $index === 0,
-                    'sort_order' => $existingImagesCount + $index,
-                ]);
-            }
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
         }
 
-        DB::commit();
+        DB::beginTransaction();
 
-        $product->load(['category', 'images', 'variants']);
+        try {
+            $product = Product::findOrFail($id);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Product updated successfully',
-            'data' => $product
-        ], 200);
+            $product->update($request->except('images'));
 
-    } catch (\Exception $e) {
-        DB::rollBack();
+            // Handle new image uploads
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $index => $image) {
+                    $imageName = time() . '_' . $index . '_' . $image->getClientOriginalName();
+                    $imagePath = $image->storeAs('products', $imageName, 'public');
+                    
+                    $existingImagesCount = $product->images()->count();
+                    
+                    ProductImage::create([
+                        'product_id' => $product->id,
+                        'image_path' => $imagePath,
+                        'is_primary' => $existingImagesCount === 0 && $index === 0,
+                        'sort_order' => $existingImagesCount + $index,
+                    ]);
+                }
+            }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to update product',
-            'error' => $e->getMessage()
-        ], 500);
+            DB::commit();
+
+            $product->load(['category', 'images', 'variants']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product updated successfully',
+                'data' => $product
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update product',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-}
 
     /**
      * Delete product
@@ -1083,8 +1063,7 @@ public function generateDiscountTemplate(Request $request)
 
                 try {
                     $productId = $row[0];
-                    $variantId = !empty($row[3]) ? $row[3] : null;
-
+                    $variantId = $row[3] ?? null;
                     $discountType = $row[6];
                     $discountValue = $row[7];
                     $startDate = $row[8];

@@ -22,7 +22,7 @@ class User extends Authenticatable
         'branch_id',
         'is_active',
         'last_login',
-         // HR Fields
+            // HR Fields
         'national_id',
         'date_of_birth',
         'gender',
@@ -46,20 +46,12 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-protected $casts = [
-    'email_verified_at' => 'datetime',
-    'last_login' => 'datetime',
-    'is_active' => 'boolean',
-    'password' => 'hashed',
-    'date_of_birth' => 'date',
-    'joining_date' => 'date',
-    'basic_salary' => 'decimal:3',
-    'transportation_allowance' => 'decimal:3',
-    'housing_allowance' => 'decimal:3',
-    'communication_allowance' => 'decimal:3',
-    'meal_allowance' => 'decimal:3',
-    'accommodation_allowance' => 'decimal:3',
-];
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'last_login' => 'datetime',
+        'is_active' => 'boolean',
+        'password' => 'hashed',
+    ];
 
     // Relationships
     public function role()
@@ -119,43 +111,5 @@ protected $casts = [
     public function isSuperAdmin()
     {
         return $this->role && $this->role->role_name === 'Super Admin';
-    }
-
-
-    // HR Relationships
-    public function documents()
-    {
-        return $this->hasMany(EmployeeDocument::class);
-    }
-
-    public function attendances()
-    {
-        return $this->hasMany(Attendance::class);
-    }
-
-    public function leaveRequests()
-    {
-        return $this->hasMany(LeaveRequest::class);
-    }
-
-    public function bonuses()
-    {
-        return $this->hasMany(Bonus::class);
-    }
-
-    public function payrolls()
-    {
-        return $this->hasMany(Payroll::class);
-    }
-
-    // Helper: Get total salary including allowances
-    public function getTotalSalaryAttribute()
-    {
-        return $this->basic_salary 
-            + $this->transportation_allowance 
-            + $this->housing_allowance 
-            + $this->communication_allowance 
-            + $this->meal_allowance 
-            + $this->accommodation_allowance;
     }
 }

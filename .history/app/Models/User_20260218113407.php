@@ -123,39 +123,39 @@ protected $casts = [
 
 
     // HR Relationships
-    public function documents()
-    {
-        return $this->hasMany(EmployeeDocument::class);
-    }
+public function documents()
+{
+    return $this->hasMany(EmployeeDocument::class);
+}
 
-    public function attendances()
-    {
-        return $this->hasMany(Attendance::class);
-    }
+public function attendances()
+{
+    return $this->hasMany(Attendance::class);
+}
 
-    public function leaveRequests()
-    {
-        return $this->hasMany(LeaveRequest::class);
-    }
+public function leaveRequests()
+{
+    return $this->hasMany(LeaveRequest::class);
+}
 
-    public function bonuses()
-    {
-        return $this->hasMany(Bonus::class);
-    }
+public function bonuses()
+{
+    return $this->hasMany(Bonus::class);
+}
 
-    public function payrolls()
-    {
-        return $this->hasMany(Payroll::class);
-    }
+public function payrolls()
+{
+    return $this->hasMany(Payroll::class);
+}
 
-    // Helper: Get total salary including allowances
-    public function getTotalSalaryAttribute()
-    {
-        return $this->basic_salary 
-            + $this->transportation_allowance 
-            + $this->housing_allowance 
-            + $this->communication_allowance 
-            + $this->meal_allowance 
-            + $this->accommodation_allowance;
-    }
+// Helper: Get total salary including allowances
+public function getTotalSalaryAttribute()
+{
+    return $this->basic_salary 
+        + $this->transportation_allowance 
+        + $this->housing_allowance 
+        + $this->communication_allowance 
+        + $this->meal_allowance 
+        + $this->accommodation_allowance;
+}
 }

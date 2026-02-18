@@ -117,16 +117,16 @@ class DamagedItemController extends Controller
 
         try {
             // Check if sufficient stock exists
-            $query = Inventory::where('product_id', $request->product_id)
-                ->where('branch_id', $request->branch_id);
+$query = Inventory::where('product_id', $request->product_id)
+    ->where('branch_id', $request->branch_id);
 
-            if ($request->variant_id === null) {
-                $query->whereNull('variant_id');
-            } else {
-                $query->where('variant_id', $request->variant_id);
-            }
+if ($request->variant_id === null) {
+    $query->whereNull('variant_id');
+} else {
+    $query->where('variant_id', $request->variant_id);
+}
 
-            $inventory = $query->first();
+$inventory = $query->first();
 
 
             if (!$inventory || $inventory->available_quantity < $request->quantity) {

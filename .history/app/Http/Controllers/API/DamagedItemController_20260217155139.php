@@ -94,133 +94,72 @@ class DamagedItemController extends Controller
     /**
      * Report damaged item
      */
-    public function store(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'product_id' => 'required|exists:products,id',
-            'variant_id' => 'nullable|exists:product_variants,id',
-            'branch_id' => 'required|exists:branches,id',
-            'quantity' => 'required|integer|min:1',
-            'damage_type' => 'required|in:Broken,Expired,Water Damage,Manufacturing Defect,Other',
-            'reported_date' => 'required|date',
+ public function store(Request $request)
+{
+    $request->validate([
+        'product_id' => 'required|exists:products,id',
+        'branch_id'  => 'required|exists:branches,id',
+        'quantity'   => 'required|integer|min:1',
+        'reason'     => 'nullable|string'
+    ]);
+
+    DB::beginTransaction();
+
+    try {
+
+        $inventory = Inventory::where('product_id', $request->product_id)
+            ->where('branch_id', $request->branch_id)
+            ->first();
+
+        if (!$inventory) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Inventory not found'
+            ], 404);
+        }
+
+        // Check available stock
+        $available = $inventory->quantity - $inventory->reserved_quantity;
+
+        if ($request->quantity > $available) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Not enough stock available'
+            ], 400);
+        }
+
+        // Reduce quantity
+        $inventory->quantity -= $request->quantity;
+        $inventory->available_quantity = 
+            $inventory->quantity - $inventory->reserved_quantity;
+        $inventory->save();
+
+        // Save damage record
+        Damage::create([
+            'product_id' => $request->product_id,
+            'branch_id'  => $request->branch_id,
+            'quantity'   => $request->quantity,
+            'reason'     => $request->reason
         ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors()
-            ], 422);
-        }
+        DB::commit();
 
-        DB::beginTransaction();
+        return response()->json([
+            'status' => true,
+            'message' => 'Damage item recorded successfully'
+        ]);
 
-        try {
-            // Check if sufficient stock exists
-            $query = Inventory::where('product_id', $request->product_id)
-                ->where('branch_id', $request->branch_id);
+    } catch (\Exception $e) {
 
-            if ($request->variant_id === null) {
-                $query->whereNull('variant_id');
-            } else {
-                $query->where('variant_id', $request->variant_id);
-            }
+        DB::rollBack();
 
-            $inventory = $query->first();
-
-
-            if (!$inventory || $inventory->available_quantity < $request->quantity) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Insufficient stock to report as damaged'
-                ], 400);
-            }
-
-            // Create damaged item record
-            $damaged = DamagedItem::create([
-                'product_id' => $request->product_id,
-                'variant_id' => $request->variant_id,
-                'branch_id' => $request->branch_id,
-                'quantity' => $request->quantity,
-                'damage_type' => $request->damage_type,
-                'reported_by' => auth()->id(),
-                'reported_date' => $request->reported_date,
-                'status' => 'Pending',
-                'repair_decision' => 'Pending',
-            ]);
-
-            // Deduct from branch inventory
-            $inventory->quantity -= $request->quantity;
-            $inventory->available_quantity = $inventory->quantity - $inventory->reserved_quantity;
-            $inventory->last_updated = now();
-            $inventory->save();
-
-            // Move to Repair Branch
-            $repairBranch = Branch::where('branch_type', 'Repair')->first();
-            
-            if ($repairBranch) {
-                $repairInventory = Inventory::firstOrCreate(
-                    [
-                        'product_id' => $request->product_id,
-                        'variant_id' => $request->variant_id,
-                        'branch_id' => $repairBranch->id,
-                    ],
-                    [
-                        'quantity' => 0,
-                        'reserved_quantity' => 0,
-                        'available_quantity' => 0,
-                        'reorder_point' => 0,
-                    ]
-                );
-
-                $repairInventory->quantity += $request->quantity;
-                $repairInventory->available_quantity = $repairInventory->quantity - $repairInventory->reserved_quantity;
-                $repairInventory->last_updated = now();
-                $repairInventory->save();
-
-                // Log movement
-                InventoryMovement::create([
-                    'product_id' => $request->product_id,
-                    'variant_id' => $request->variant_id,
-                    'from_branch_id' => $request->branch_id,
-                    'to_branch_id' => $repairBranch->id,
-                    'movement_type' => 'Damage',
-                    'quantity' => $request->quantity,
-                    'reference_type' => 'DamagedItem',
-                    'reference_id' => $damaged->id,
-                    'notes' => "Damaged: {$request->damage_type}",
-                    'moved_by' => auth()->id(),
-                    'movement_date' => now(),
-                ]);
-
-                $damaged->update(['status' => 'Sent to Repair']);
-            }
-
-            DB::commit();
-
-            $damaged->load([
-                'product',
-                'variant',
-                'branch',
-                'reportedBy'
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Damaged item reported successfully',
-                'data' => $damaged
-            ], 201);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to report damaged item',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'status' => false,
+            'message' => $e->getMessage()
+        ]);
     }
+}
+
 
     /**
      * Make repair decision

@@ -19,7 +19,6 @@ use App\Http\Controllers\API\LeaveTypeController;
 use App\Http\Controllers\API\LeaveRequestController;
 use App\Http\Controllers\API\BonusController;
 use App\Http\Controllers\API\PayrollController;
-use App\Http\Controllers\API\DashboardController;
 
 
 
@@ -206,69 +205,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 
-    // Employee Management (HR access)
-    Route::middleware(['permission:view_users'])->group(function () {
-        Route::get('/employees', [EmployeeController::class, 'index']);
-        Route::get('/employees/statistics', [EmployeeController::class, 'statistics']);
-        Route::get('/employees/department/{department}', [EmployeeController::class, 'getByDepartment']);
-        Route::get('/employees/{id}', [EmployeeController::class, 'show']);
-    });
-
-    Route::middleware(['permission:edit_user'])->group(function () {
-        Route::put('/employees/{id}/hr-info', [EmployeeController::class, 'updateHRInfo']);
-    });
-
-    // Employee Documents
-    Route::get('/employees/{userId}/documents', [EmployeeDocumentController::class, 'index']);
-    Route::post('/employee-documents', [EmployeeDocumentController::class, 'store']);
-    Route::delete('/employee-documents/{id}', [EmployeeDocumentController::class, 'destroy']);
-    Route::get('/employee-documents/expiring', [EmployeeDocumentController::class, 'getExpiringDocuments']);
-    Route::get('/employee-documents/expired', [EmployeeDocumentController::class, 'getExpiredDocuments']);
-
-    // Attendance Management
-    Route::get('/attendances', [AttendanceController::class, 'index']);
-    Route::post('/attendances/check-in', [AttendanceController::class, 'checkIn']);
-    Route::post('/attendances/check-out', [AttendanceController::class, 'checkOut']);
-    Route::post('/attendances', [AttendanceController::class, 'store']);
-    Route::get('/attendances/user/{userId}/summary', [AttendanceController::class, 'getUserSummary']);
-    Route::get('/attendances/report', [AttendanceController::class, 'report']);
-
-    // Leave Types (Admin only)
-    Route::middleware(['role:Super Admin'])->group(function () {
-        Route::get('/leave-types', [LeaveTypeController::class, 'index']);
-        Route::post('/leave-types', [LeaveTypeController::class, 'store']);
-        Route::put('/leave-types/{id}', [LeaveTypeController::class, 'update']);
-        Route::delete('/leave-types/{id}', [LeaveTypeController::class, 'destroy']);
-    });
-
-    // Leave Requests
-    Route::get('/leave-requests', [LeaveRequestController::class, 'index']);
-    Route::get('/leave-requests/statistics', [LeaveRequestController::class, 'statistics']);
-    Route::get('/leave-requests/{id}', [LeaveRequestController::class, 'show']);
-    Route::post('/leave-requests', [LeaveRequestController::class, 'store']);
-    Route::post('/leave-requests/{id}/approve', [LeaveRequestController::class, 'approve']);
-    Route::post('/leave-requests/{id}/reject', [LeaveRequestController::class, 'reject']);
-    Route::post('/leave-requests/{id}/cancel', [LeaveRequestController::class, 'cancel']);
-    Route::get('/leave-requests/user/{userId}/balance', [LeaveRequestController::class, 'getLeaveBalance']);
-
-    // Bonuses
-    Route::get('/bonuses', [BonusController::class, 'index']);
-    Route::get('/bonuses/user/{userId}/summary', [BonusController::class, 'getUserSummary']);
-    Route::post('/bonuses', [BonusController::class, 'store']);
-    Route::put('/bonuses/{id}', [BonusController::class, 'update']);
-    Route::delete('/bonuses/{id}', [BonusController::class, 'destroy']);
-
-    // Payroll
-    Route::get('/payrolls', [PayrollController::class, 'index']);
-    Route::get('/payrolls/statistics', [PayrollController::class, 'statistics']);
-    Route::get('/payrolls/{id}', [PayrollController::class, 'show']);
-    Route::post('/payrolls/generate', [PayrollController::class, 'generate']);
-    Route::post('/payrolls/generate-bulk', [PayrollController::class, 'generateBulk']);
-    Route::post('/payrolls/{id}/approve', [PayrollController::class, 'approve']);
-    Route::post('/payrolls/{id}/mark-paid', [PayrollController::class, 'markAsPaid']);
-    Route::delete('/payrolls/{id}', [PayrollController::class, 'destroy']);
-    // Dashboard
-    Route::get('/dashboard/hr', [DashboardController::class, 'hrDashboard']);
+    
 
     // Example of using permission middleware
     // Route::middleware(['permission:create_product'])->group(function () {

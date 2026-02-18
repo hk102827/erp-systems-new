@@ -1083,8 +1083,7 @@ public function generateDiscountTemplate(Request $request)
 
                 try {
                     $productId = $row[0];
-                    $variantId = !empty($row[3]) ? $row[3] : null;
-
+                    $variantId = $row[3] ?? null;
                     $discountType = $row[6];
                     $discountValue = $row[7];
                     $startDate = $row[8];

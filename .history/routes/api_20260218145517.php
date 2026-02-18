@@ -19,7 +19,6 @@ use App\Http\Controllers\API\LeaveTypeController;
 use App\Http\Controllers\API\LeaveRequestController;
 use App\Http\Controllers\API\BonusController;
 use App\Http\Controllers\API\PayrollController;
-use App\Http\Controllers\API\DashboardController;
 
 
 
