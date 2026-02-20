@@ -89,76 +89,58 @@ class UserController extends Controller
     /**
      * Create new user
      */
-public function store(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'name' => 'required|string|max:255',
-        'email' => 'required|string|email|max:255|unique:users,email',
-        'password' => ['required', Password::min(8)], // ✅ Removed 'confirmed'
-        'phone' => 'nullable|string|max:20',
-        'role_id' => 'required|exists:roles,id',
-        'branch_id' => 'required|exists:branches,id',
-        'is_active' => 'boolean',
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Validation error',
-            'errors' => $validator->errors()
-        ], 422);
-    }
-
-    try {
-        // Generate unique employee ID
-        $employeeId = $this->generateEmployeeId();
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'employee_id' => $employeeId,
-            'phone' => $request->phone,
-            'role_id' => $request->role_id,
-            'branch_id' => $request->branch_id,
-            'is_active' => $request->is_active ?? true,
-            
-            // ✅ Add HR fields support
-            'national_id' => $request->national_id,
-            'date_of_birth' => $request->date_of_birth,
-            'gender' => $request->gender,
-            'marital_status' => $request->marital_status,
-            'joining_date' => $request->joining_date,
-            'job_title' => $request->job_title,
-            'department' => $request->department,
-            'basic_salary' => $request->basic_salary ?? 0,
-            'transportation_allowance' => $request->transportation_allowance ?? 0,
-            'housing_allowance' => $request->housing_allowance ?? 0,
-            'communication_allowance' => $request->communication_allowance ?? 0,
-            'meal_allowance' => $request->meal_allowance ?? 0,
-            'accommodation_allowance' => $request->accommodation_allowance ?? 0,
-            'emergency_contact_name' => $request->emergency_contact_name,
-            'emergency_contact_phone' => $request->emergency_contact_phone,
-            'address' => $request->address,
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'password' => ['required', 'confirmed', Password::min(8)],
+            'phone' => 'nullable|string|max:20',
+            'role_id' => 'required|exists:roles,id',
+            'branch_id' => 'required|exists:branches,id',
+            'is_active' => 'boolean',
         ]);
 
-        // Load relationships
-        $user->load(['role.permissions', 'branch']);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User created successfully',
-            'data' => $user
-        ], 201);
+        try {
+            // Generate unique employee ID
+            $employeeId = $this->generateEmployeeId();
 
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to create user',
-            'error' => $e->getMessage()
-        ], 500);
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'employee_id' => $employeeId,
+                'phone' => $request->phone,
+                'role_id' => $request->role_id,
+                'branch_id' => $request->branch_id,
+                'is_active' => $request->is_active ?? true,
+            ]);
+
+            // Load relationships
+            $user->load(['role.permissions', 'branch']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User created successfully',
+                'data' => $user
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create user',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-}
 
     /**
      * Update user

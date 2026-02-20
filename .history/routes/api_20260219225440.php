@@ -278,53 +278,31 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
      // ==================== CASH REGISTER ROUTES ====================
-    // Cash Registers
     Route::prefix('cash-registers')->group(function () {
-        Route::get('/', [CashRegisterController::class, 'index']);
-        Route::post('/open', [CashRegisterController::class, 'open']);
-        Route::post('/{id}/close', [CashRegisterController::class, 'close']);
-        Route::get('/current', [CashRegisterController::class, 'getCurrentRegister']);
-        Route::get('/{id}', [CashRegisterController::class, 'show']);
-        Route::post('/cash-movement', [CashRegisterController::class, 'addCashMovement']);
+        Route::get('/', [CashRegisterController::class, 'index']); // List all registers
+        Route::post('/open', [CashRegisterController::class, 'open']); // Open register
+        Route::post('/{id}/close', [CashRegisterController::class, 'close']); // Close register
+        Route::get('/current', [CashRegisterController::class, 'getCurrentRegister']); // Get current open register
+        Route::get('/{id}', [CashRegisterController::class, 'show']); // Register details
+        Route::post('/cash-movement', [CashRegisterController::class, 'addCashMovement']); // Add cash in/out
     });
 
-    // Sales
+    // ==================== SALES ROUTES ====================
     Route::prefix('sales')->group(function () {
-        Route::get('/', [SaleController::class, 'index']);
-        Route::post('/', [SaleController::class, 'store']);
-        Route::get('/statistics', [SaleController::class, 'statistics']);
-        Route::get('/{id}', [SaleController::class, 'show']);
-        Route::get('/{id}/receipt', [SaleController::class, 'generateReceipt']); // ✅ NEW
+        Route::get('/', [SaleController::class, 'index']); // List all sales
+        Route::post('/', [SaleController::class, 'store']); // Create sale (Process transaction)
+        Route::get('/statistics', [SaleController::class, 'statistics']); // Sales statistics
+        Route::get('/{id}', [SaleController::class, 'show']); // Sale details
     });
 
-    // Returns
+    // ==================== RETURNS ROUTES ====================
     Route::prefix('returns')->group(function () {
-        Route::get('/', [ReturnController::class, 'index']);
-        Route::post('/', [ReturnController::class, 'store']);
-        Route::get('/statistics', [ReturnController::class, 'statistics']);
-        Route::get('/{id}', [ReturnController::class, 'show']);
-        Route::post('/{id}/approve', [ReturnController::class, 'approve']);
-        Route::post('/{id}/reject', [ReturnController::class, 'reject']);
-    });
-
-    // ✅ NEW: Coupons
-    Route::prefix('coupons')->group(function () {
-        Route::get('/', [CouponController::class, 'index']);
-        Route::post('/', [CouponController::class, 'store']);
-        Route::get('/{id}', [CouponController::class, 'show']);
-        Route::put('/{id}', [CouponController::class, 'update']);
-        Route::delete('/{id}', [CouponController::class, 'destroy']);
-        Route::post('/validate', [CouponController::class, 'validate']);
-        Route::get('/{id}/usage-statistics', [CouponController::class, 'usageStatistics']);
-    });
-
-    // ✅ NEW: Shift Reports
-    Route::prefix('shift-reports')->group(function () {
-        Route::get('/', [ShiftReportController::class, 'index']);
-        Route::post('/generate/{cashRegisterId}', [ShiftReportController::class, 'generate']);
-        Route::get('/daily-summary', [ShiftReportController::class, 'dailySummary']);
-        Route::get('/{id}', [ShiftReportController::class, 'show']);
-        Route::get('/{id}/export/{format}', [ShiftReportController::class, 'export']);
+        Route::get('/', [ReturnController::class, 'index']); // List all returns
+        Route::post('/', [ReturnController::class, 'store']); // Create return
+        Route::get('/statistics', [ReturnController::class, 'statistics']); // Return statistics
+        Route::get('/{id}', [ReturnController::class, 'show']); // Return details
+        Route::post('/{id}/approve', [ReturnController::class, 'approve']); // Approve return
+        Route::post('/{id}/reject', [ReturnController::class, 'reject']); // Reject return
     });
 
 });

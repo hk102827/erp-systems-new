@@ -20,11 +20,6 @@ use App\Http\Controllers\API\LeaveRequestController;
 use App\Http\Controllers\API\BonusController;
 use App\Http\Controllers\API\PayrollController;
 use App\Http\Controllers\API\DashboardController;
-use App\Http\Controllers\API\CashRegisterController;
-use App\Http\Controllers\API\SaleController;
-use App\Http\Controllers\API\ReturnController;
-use App\Http\Controllers\API\CouponController;
-use App\Http\Controllers\API\ShiftReportController;
 
 
 
@@ -275,56 +270,139 @@ Route::middleware('auth:sanctum')->group(function () {
     // Dashboard
     Route::get('/dashboard/hr', [DashboardController::class, 'hrDashboard']);
 
-
-
-     // ==================== CASH REGISTER ROUTES ====================
-    // Cash Registers
-    Route::prefix('cash-registers')->group(function () {
-        Route::get('/', [CashRegisterController::class, 'index']);
-        Route::post('/open', [CashRegisterController::class, 'open']);
-        Route::post('/{id}/close', [CashRegisterController::class, 'close']);
-        Route::get('/current', [CashRegisterController::class, 'getCurrentRegister']);
-        Route::get('/{id}', [CashRegisterController::class, 'show']);
-        Route::post('/cash-movement', [CashRegisterController::class, 'addCashMovement']);
-    });
-
-    // Sales
-    Route::prefix('sales')->group(function () {
-        Route::get('/', [SaleController::class, 'index']);
-        Route::post('/', [SaleController::class, 'store']);
-        Route::get('/statistics', [SaleController::class, 'statistics']);
-        Route::get('/{id}', [SaleController::class, 'show']);
-        Route::get('/{id}/receipt', [SaleController::class, 'generateReceipt']); // ✅ NEW
-    });
-
-    // Returns
-    Route::prefix('returns')->group(function () {
-        Route::get('/', [ReturnController::class, 'index']);
-        Route::post('/', [ReturnController::class, 'store']);
-        Route::get('/statistics', [ReturnController::class, 'statistics']);
-        Route::get('/{id}', [ReturnController::class, 'show']);
-        Route::post('/{id}/approve', [ReturnController::class, 'approve']);
-        Route::post('/{id}/reject', [ReturnController::class, 'reject']);
-    });
-
-    // ✅ NEW: Coupons
-    Route::prefix('coupons')->group(function () {
-        Route::get('/', [CouponController::class, 'index']);
-        Route::post('/', [CouponController::class, 'store']);
-        Route::get('/{id}', [CouponController::class, 'show']);
-        Route::put('/{id}', [CouponController::class, 'update']);
-        Route::delete('/{id}', [CouponController::class, 'destroy']);
-        Route::post('/validate', [CouponController::class, 'validate']);
-        Route::get('/{id}/usage-statistics', [CouponController::class, 'usageStatistics']);
-    });
-
-    // ✅ NEW: Shift Reports
-    Route::prefix('shift-reports')->group(function () {
-        Route::get('/', [ShiftReportController::class, 'index']);
-        Route::post('/generate/{cashRegisterId}', [ShiftReportController::class, 'generate']);
-        Route::get('/daily-summary', [ShiftReportController::class, 'dailySummary']);
-        Route::get('/{id}', [ShiftReportController::class, 'show']);
-        Route::get('/{id}/export/{format}', [ShiftReportController::class, 'export']);
-    });
-
 });
+// ```
+
+// ---
+
+// ## **Route Structure Summary:**
+
+// ### **Public Routes (No Auth):**
+// ```
+// POST   /api/login
+// POST   /api/register (optional)
+// ```
+
+// ### **Protected Routes (Auth Required):**
+
+// **User Info:**
+// ```
+// GET    /api/user              - Get authenticated user with role & permissions
+// POST   /api/logout            - Logout user
+// ```
+
+// **Role Management (Super Admin Only):**
+// ```
+// GET    /api/roles             - Get all roles
+// GET    /api/roles/{id}        - Get single role
+// POST   /api/roles             - Create new role
+// PUT    /api/roles/{id}        - Update role
+// DELETE /api/roles/{id}        - Delete role
+// POST   /api/roles/{id}/assign-permissions - Assign permissions to role
+// ```
+
+// **Permission Management (Super Admin Only):**
+// ```
+// GET    /api/permissions                    - Get all permissions
+// GET    /api/permissions/{id}               - Get single permission
+// POST   /api/permissions                    - Create new permission
+// PUT    /api/permissions/{id}               - Update permission
+// DELETE /api/permissions/{id}               - Delete permission
+// GET    /api/permissions/module/{moduleName} - Get permissions by module
+// ```
+
+// ---
+
+// ## **Testing with Postman:**
+
+// ### **1. Get All Roles**
+// ```
+// Method: GET
+// URL: http://localhost:8000/api/roles
+// Headers:
+//   Authorization: Bearer {your_token}
+//   Accept: application/json
+// ```
+
+// ### **2. Get Single Role**
+// ```
+// Method: GET
+// URL: http://localhost:8000/api/roles/1
+// Headers:
+//   Authorization: Bearer {your_token}
+//   Accept: application/json
+// ```
+
+// ### **3. Create Role**
+// ```
+// Method: POST
+// URL: http://localhost:8000/api/roles
+// Headers:
+//   Authorization: Bearer {your_token}
+//   Content-Type: application/json
+//   Accept: application/json
+// Body (JSON):
+// {
+//   "role_name": "Store Manager",
+//   "description": "Manages store operations",
+//   "is_active": true,
+//   "permissions": [1, 2, 3, 10, 11]
+// }
+// ```
+
+// ### **4. Update Role**
+// ```
+// Method: PUT
+// URL: http://localhost:8000/api/roles/1
+// Headers:
+//   Authorization: Bearer {your_token}
+//   Content-Type: application/json
+//   Accept: application/json
+// Body (JSON):
+// {
+//   "role_name": "Senior Store Manager",
+//   "description": "Updated description",
+//   "is_active": true,
+//   "permissions": [1, 2, 3, 4, 10, 11, 12]
+// }
+// ```
+
+// ### **5. Delete Role**
+// ```
+// Method: DELETE
+// URL: http://localhost:8000/api/roles/1
+// Headers:
+//   Authorization: Bearer {your_token}
+//   Accept: application/json
+// ```
+
+// ### **6. Assign Permissions to Role**
+// ```
+// Method: POST
+// URL: http://localhost:8000/api/roles/2/assign-permissions
+// Headers:
+//   Authorization: Bearer {your_token}
+//   Content-Type: application/json
+//   Accept: application/json
+// Body (JSON):
+// {
+//   "permissions": [10, 11, 12, 15, 16, 17]
+// }
+// ```
+
+// ### **7. Get All Permissions**
+// ```
+// Method: GET
+// URL: http://localhost:8000/api/permissions
+// Headers:
+//   Authorization: Bearer {your_token}
+//   Accept: application/json
+// ```
+
+// ### **8. Get Permissions by Module**
+// ```
+// Method: GET
+// URL: http://localhost:8000/api/permissions/module/Product Management
+// Headers:
+//   Authorization: Bearer {your_token}
+//   Accept: application/json
